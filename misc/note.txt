@@ -1,0 +1,9 @@
+water filter - https://codepen.io/rafaelcastrocouto/pen/yRQPxj
+more - https://tympanus.net/codrops/2019/02/19/svg-filter-effects-creating-texture-with-feturbulence/
+more - https://www.youtube.com/watch?v=O0Au0Xc-qL8&ab_channel=RedStapler
+
+
+circle:
+    filter: invert(1) saturate(2) grayscale(100%);
+    color: rgb(0, 255, 255); 
+    mix-blend-mode: difference;
