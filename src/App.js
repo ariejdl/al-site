@@ -43,7 +43,6 @@ const itemsToShow = [
   }
 ]
 
-
 function TextAsLetters({ text }) {
   return <span className="anim-text">{
     Array.prototype.map.call(text,
@@ -59,6 +58,25 @@ function Item(obj) {
       <h1>{ <TextAsLetters text={mmReplace(obj.name)} /> }</h1>
     </div>
   </div>
+}
+
+function newElement() {
+    // add new element
+    const altColour = Math.random() > 0.9;
+    const height = altColour ? 
+      20 :
+      Math.max(0.4, Math.random()) * 100;
+    const origSpeed = Math.max(0.5, Math.random()) * 2;
+
+    return {
+      id: elsId++,
+      age: 0,
+      position: -height,
+      height: height,
+      origSpeed: origSpeed,
+      speed: 0,
+      colour: altColour ? '#ff00ff' : 'white'
+    }
 }
 
 // https://css-tricks.com/using-requestanimationframe-with-react-hooks/
@@ -84,14 +102,14 @@ const useAnimationFrame = callback => {
 }
 
 let elsId = 1;
-let leftElements = [];
+let leftElements = d3.range(0, 10).map(_ => newElement());
 const LINE_WIDTH = 4;
 
 function App() {
 
   const leftBandsRef = useRef();
   const [mousePos, setMousePos] = useState();
-  const pageHeight = document.body.clientHeight;
+  const pageHeight = document.body.clientHeight || 1000;
 
   useEffect(() => {
 
@@ -127,21 +145,8 @@ function App() {
       }
     }
 
-    // 1d lava lamp
-    if ((leftElements.length < 8 && Math.random() > 0.25) ||
-        Math.random() > 0.90) {
-      // add new element
-      const height = Math.max(0.4, Math.random()) * 100;
-      const origSpeed = Math.max(0.5, Math.random()) * 2;
-      leftElements.push({
-        id: elsId++,
-        age: 0,
-        position: -height,
-        height: height,
-        origSpeed: origSpeed,
-        speed: 0,
-        colour: 'white'
-      })
+    if (Math.random() > 0.90) {
+      leftElements.push(newElement());
     }
 
     d3.select(leftBandsRef.current)
@@ -158,6 +163,7 @@ function App() {
           .style('top', e => e.position + 'px')
           .style('width', LINE_WIDTH + 'px')
           .style('height', e => e.height + 'px')
+          .style('filter', 'saturate(1.5) brightness(1.5)')
           .style('mix-blend-mode', 'difference')
       )
   })
@@ -187,8 +193,7 @@ function App() {
           <div onMouseMove={(e) => {setMousePos({ x: e.pageX, y: e.pageY })}}>
             <div className="container">
               <h1><TextAsLetters text="arie lakeman"/></h1>
-              <h3><TextAsLetters text="cv" /><TextAsLetters text=", " /><TextAsLetters text="@email"/></h3>
-              <h1><TextAsLetters text="selected work"/></h1>
+              <h3><TextAsLetters text="cv" /><TextAsLetters text=", " /><TextAsLetters text="@email"/><TextAsLetters text=", selected work:"/></h3>
             </div>
             {
               itemsToShow.map((obj, i) => <Item key={i} {...obj} />)
