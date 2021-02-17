@@ -27,35 +27,58 @@ const mmReplace = (v) => v.replace(/[JSP]/g, c => c.toLowerCase())
 const itemsToShow = [
   {
     name: "William Morris Patterns",
-    preview: "/previews/wm.jpg"
+    preview: "/previews/wm.jpg",
+    text: "technologies: Blender, Python.  Permission granted by william morris gallery"
   },
   {
     name: "Josef Albers Study",
-    preview: "/previews/ja.jpg"
+    preview: "/previews/ja.jpg",
+    text: "technologies: JavaScript, Python, HTML, CSS"
   },
   {
     name: "Japanese Patterns",
-    preview: "/previews/jpipe.jpg"
+    preview: "/previews/jpipe.jpg",
+    text: "tool: Figma"
   },
   {
     name: "Japanese Poetry",
-    preview: "/previews/jp.jpg"
+    preview: "/previews/jp.jpg",
+    text: "Technologies: JavaScript, Python, HTML, CSS"
   }
 ]
 
+function WordAsLetters({ word }) {
+  if (word === " ") {
+    return <span> </span>
+  }
+  return <span className="word">{
+    Array.prototype.map.call(word,
+    (letter, i) => <span key={i} className="letter">{ letter }</span>)
+} </span>
+}
+
 function TextAsLetters({ text }) {
-  return <span className="anim-text">{
-    Array.prototype.map.call(text,
-      (letter, i) => <span key={i} className="letter">{ letter === " " ? "\xa0" : letter }</span>)
-  }</span> 
+  return <span className="anim-text">
+    {
+      text.split(" ").reduce((accum, word) => {
+        if (accum.length) {
+          return [...accum, ' ', word]
+        }
+        return [word]
+      }, []).map((word, i) => <WordAsLetters key={i} word={word} />)
+  }
+  </span> 
 }
 
 function Item(obj) {
-
-  return  <div className="container item">
-    <img className="preview-img" src={obj.preview}/>
-    <div className="preview-content">
-      <h1>{ <TextAsLetters text={mmReplace(obj.name)} /> }</h1>
+  return  <div className="item">
+    <div className="container">
+      <img className="preview-img" src={obj.preview}/>
+      <div className="preview-content">
+        <h1>{ <TextAsLetters text={mmReplace(obj.name)} /> }</h1>
+        <br/><br/><br/>
+        <h3>{ <TextAsLetters text={obj.text.toLowerCase()} /> }</h3>
+      </div>
     </div>
   </div>
 }
@@ -113,17 +136,19 @@ function App() {
 
   useEffect(() => {
 
+    ['h1 .letter', 'h3 .letter', '.preview-img'].map((target) => {
       anime.timeline({loop: false})
         .add({
-          targets: `h1 .letter, h3 .letter, .preview-img`,
+          targets: target,
           scale: [1.2, 1],
           translateY: (el, idx) => [-25 - Math.min(135, idx/2),0],
           translateX: (el, idx) => [-25 - Math.min(135, idx/2),0],
           opacity: [0, 1],
           easing: "easeOutExpo",
           duration: 1200,
-          delay: (el, idx) => Math.min(15 * idx, 2000)
+          delay: (el, idx) => Math.min(Math.log(idx + 1) / Math.log(2) * 75, 4000)
         })
+      });
   }, [])
 
   useAnimationFrame(() => {
