@@ -136,7 +136,14 @@ function App() {
 
   useEffect(() => {
 
-    ['h1 .letter', 'h3 .letter', '.preview-img'].map((target) => {
+    if (!window.chrome) {
+      document.body.classList.add("not-chrome");
+    }
+
+    ['h1 .letter', 'h3 .word', '.preview-img'].map((target) => {
+
+      const isWord = !!target.match(/word/ig);
+
       anime.timeline({loop: false})
         .add({
           targets: target,
@@ -146,7 +153,10 @@ function App() {
           opacity: [0, 1],
           easing: "easeOutExpo",
           duration: 1200,
-          delay: (el, idx) => Math.min(Math.log(idx + 1) / Math.log(2) * 75, 4000)
+          delay: (el, idx) => 
+            isWord ?
+              Math.min(idx * 80, 2000) :
+              Math.min(idx * 20, 2000)
         })
       });
   }, [])
@@ -198,11 +208,11 @@ function App() {
     <div className="">
 
       <div ref={leftBandsRef}
+        className="left-band"
         style={{
           position: 'absolute',
           overflow: 'hidden',
           left: 55,
-          opacity: 0.6,
           top: 0,
           height: pageHeight,
           width: LINE_WIDTH
@@ -224,6 +234,11 @@ function App() {
               itemsToShow.map((obj, i) => <Item key={i} {...obj} />)
             }
           </div>
+          <div style={{
+            textAlign: 'center',
+            padding: '40px 0 40px 0',
+            fontSize: '1rem'
+          }}>sdg</div>
         </Route>)
       </Switch>
     </div>
