@@ -11,6 +11,13 @@ import {
 } from "react-router-dom";
 import anime from "animejs";
 import * as d3 from "d3";
+import * as PIXI from 'pixi.js'
+
+let RAF_CALLBACKS = [];
+
+let elsId = 1;
+let leftElements = d3.range(0, 10).map(_ => newElement());
+const LINE_WIDTH = 4;
 
 function loadImage(url) {
   return new  Promise(resolve => {
@@ -74,20 +81,72 @@ function TextAsLetters({ text }) {
   </span> 
 }
 
+// https://redstapler.co/ultra-realistic-water-ripple-effect-javascript-tutorial/
+function bgAnimInit(el, bgImage) {
+  const elWidth = el.offsetWidth;
+  const elHeight = el.offsetHeight;    
+
+  const app = new PIXI.Application({ width: elWidth, height: elHeight });
+  el.appendChild(app.view);
+  const image = new PIXI.Sprite.from(bgImage);
+  image.width = elWidth;
+  image.height = elHeight;
+  app.stage.addChild(image);
+
+  const displacementSprite = new PIXI.Sprite.from("/texture.jpg");
+  const displacementFilter = new PIXI.filters.DisplacementFilter(displacementSprite);
+  displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
+  app.stage.addChild(displacementSprite);
+  app.stage.filters = [displacementFilter];
+
+  app.renderer.view.style.transform = 'scale(1.02)';
+  displacementSprite.scale.x = 4;
+  displacementSprite.scale.y = 4;
+
+  return {
+    app, displacementSprite
+  };
+}
+
 function Item(obj) {
 
   const bgRef = useRef();
 
+  // RAF_CALLBACKS
+
+  useEffect(() => {
+    if (!bgRef || !bgRef.current)
+      return;
+
+    const animObj = bgAnimInit(bgRef.current, obj.background)
+
+    RAF_CALLBACKS.push({
+      id: obj.name,
+      callback: () => {
+        animObj.displacementSprite.x += 10;
+        animObj.displacementSprite.y += 4;
+      }
+    })
+  }, [bgRef])
+
   return  <div className="item"
     onMouseOver={() => {
-      console.log(bgRef.current)
+      console.log('over')
+    }}
+    onMouseOut={() => {
+      console.log('out')
     }}>
     <div 
       ref={bgRef}
       style={{
       position: 'absolute',
+      overflow: 'hidden',
+      opacity: 0.2,
+      /*
       background: `url(${obj.background})`,
+      backgroundPosition: 'center',
       backgroundSize: 'cover',
+      */
       width: '100%',
       height: '100%'
     }}>
@@ -123,31 +182,58 @@ function newElement() {
     }
 }
 
-// https://css-tricks.com/using-requestanimationframe-with-react-hooks/
-const useAnimationFrame = callback => {
-  // Use useRef for mutable variables that we want to persist
-  // without triggering a re-render on their change
-  const requestRef = useRef();
-  const previousTimeRef = useRef();
-  
-  const animate = time => {
-    if (previousTimeRef.current != undefined) {
-      const deltaTime = time - previousTimeRef.current;
-      callback(deltaTime)
-    }
-    previousTimeRef.current = time;
-    requestRef.current = requestAnimationFrame(animate);
-  }
-  
-  useEffect(() => {
-    requestRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestRef.current);
-  }, []); // Make sure the effect runs only once
+function startRAFLoop() {
+
+  (function loop() {
+    for (let i = 0; i < RAF_CALLBACKS.length; i++) {
+      RAF_CALLBACKS[i].callback();
+    }  
+    requestAnimationFrame(loop)
+  })()
 }
 
-let elsId = 1;
-let leftElements = d3.range(0, 10).map(_ => newElement());
-const LINE_WIDTH = 4;
+function leftBandAnim(el) {
+
+  return function() {
+    const pageHeight = document.body.clientHeight;
+
+    for (let i = 0; i < leftElements.length; i++) {
+      leftElements[i].age += 1;
+      leftElements[i].speed = Math.max(0.25, leftElements[i].origSpeed - leftElements[i].age / 1000);
+      leftElements[i].position += 10 * leftElements[i].speed;
+    }
+
+    let len = leftElements.length;
+    while (len--) {
+      let el = leftElements[len];
+      if ((el.position) > pageHeight) {
+        leftElements.splice(len, 1);
+      }
+    }
+
+    if (Math.random() > 0.90) {
+      leftElements.push(newElement());
+    }
+
+    d3.select(el)
+      .selectAll(".bar")
+      .data(leftElements, e => e.id)
+      .join(
+        enter => enter
+            .append("div")
+            .attr("class", "bar")
+            .style('background', e => e.colour),
+        update => update
+          .style("position", 'absolute')
+          .style('left', 0)
+          .style('top', e => e.position + 'px')
+          .style('width', LINE_WIDTH + 'px')
+          .style('height', e => e.height + 'px')
+          .style('filter', 'saturate(1.5) brightness(1.5)')
+          .style('mix-blend-mode', 'difference')
+      )
+  }
+}
 
 function App() {
 
@@ -182,47 +268,18 @@ function App() {
       });
   }, [])
 
-  useAnimationFrame(() => {
-    const pageHeight = document.body.clientHeight;
+  useEffect(() => {
     if (!leftBandsRef || !leftBandsRef.current)
       return;
 
-    for (let i = 0; i < leftElements.length; i++) {
-      leftElements[i].age += 1;
-      leftElements[i].speed = Math.max(0.25, leftElements[i].origSpeed - leftElements[i].age / 1000);
-      leftElements[i].position += 10 * leftElements[i].speed;
-    }
+    RAF_CALLBACKS.push({
+      callback: leftBandAnim(leftBandsRef.current),
+      id: 'left-bar'
+    });
 
-    let len = leftElements.length;
-    while (len--) {
-      let el = leftElements[len];
-      if ((el.position) > pageHeight) {
-        leftElements.splice(len, 1);
-      }
-    }
+    startRAFLoop();
 
-    if (Math.random() > 0.90) {
-      leftElements.push(newElement());
-    }
-
-    d3.select(leftBandsRef.current)
-      .selectAll(".bar")
-      .data(leftElements, e => e.id)
-      .join(
-        enter => enter
-            .append("div")
-            .attr("class", "bar")
-            .style('background', e => e.colour),
-        update => update
-          .style("position", 'absolute')
-          .style('left', 0)
-          .style('top', e => e.position + 'px')
-          .style('width', LINE_WIDTH + 'px')
-          .style('height', e => e.height + 'px')
-          .style('filter', 'saturate(1.5) brightness(1.5)')
-          .style('mix-blend-mode', 'difference')
-      )
-  })
+  }, [leftBandsRef])
 
   return (
     <Router>
