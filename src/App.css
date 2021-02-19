@@ -67,6 +67,8 @@ h5 { font-size: 1rem; }
 
 .item {
 	position: relative;
+	cursor: pointer;
+	transition: color 100ms ease-in-out;
 }
 
 .item > .container {
@@ -79,6 +81,23 @@ h5 { font-size: 1rem; }
 .item h2,
 .item h3 {
 	margin: 0;
+}
+
+.item .item-bg {
+	transition: opacity 300ms ease-in-out;
+	opacity: 0;
+}
+
+.item:hover .item-bg {
+	opacity: 0.25;
+}
+
+.item:hover {
+	color: #111;
+}
+
+.not-chrome .item:hover {
+	text-shadow: 0 1px 0 #111;
 }
 
 .item canvas {

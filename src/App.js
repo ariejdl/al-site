@@ -81,16 +81,37 @@ function TextAsLetters({ text }) {
   </span> 
 }
 
+function bgAnimResize(obj) {
+  const parent = obj.el.parentNode;
+  const width = parent.offsetWidth;
+  const height = parent.offsetHeight;
+  obj.app.renderer.resize(width, height);
+
+  const tex = obj.tex;
+  const image = obj.image;
+  const aspectRatio = tex.orig.width / tex.orig.height;
+
+  let finalWidth = width;
+  let finalHeight = width / aspectRatio;
+
+  if (finalHeight < height) {
+    finalHeight = height;
+    finalWidth = finalHeight * aspectRatio;
+  }
+
+  image.width = finalWidth;
+  image.height = finalHeight;
+}
+
 // https://redstapler.co/ultra-realistic-water-ripple-effect-javascript-tutorial/
 function bgAnimInit(el, bgImage) {
   const elWidth = el.offsetWidth;
   const elHeight = el.offsetHeight;    
 
-  const app = new PIXI.Application({ width: elWidth, height: elHeight });
+  const app = new PIXI.Application({ width: elWidth, height: elHeight, backgroundColor: 0xffffff });
   el.appendChild(app.view);
-  const image = new PIXI.Sprite.from(bgImage);
-  image.width = elWidth;
-  image.height = elHeight;
+  const tex = PIXI.Texture.from(bgImage);
+  const image = new PIXI.Sprite.from(tex);
   app.stage.addChild(image);
 
   const displacementSprite = new PIXI.Sprite.from("/texture.jpg");
@@ -104,44 +125,58 @@ function bgAnimInit(el, bgImage) {
   displacementSprite.scale.y = 4;
 
   return {
-    app, displacementSprite
+    el, app, displacementSprite, tex, image
   };
 }
 
 function Item(obj) {
 
   const bgRef = useRef();
-
-  // RAF_CALLBACKS
+  const [isOver, setIsOver] = useState(false);
 
   useEffect(() => {
     if (!bgRef || !bgRef.current)
       return;
 
-    const animObj = bgAnimInit(bgRef.current, obj.background)
-
     RAF_CALLBACKS.push({
       id: obj.name,
-      callback: () => {
-        animObj.displacementSprite.x += 10;
-        animObj.displacementSprite.y += 4;
+      live: false,
+      _obj: bgAnimInit(bgRef.current, obj.background),
+      callback: (obj) => {
+        obj._obj.displacementSprite.x += 10;
+        obj._obj.displacementSprite.y += 4;
       }
     })
   }, [bgRef])
 
   return  <div className="item"
     onMouseOver={() => {
-      console.log('over')
+      setIsOver(true);
+      const cb = RAF_CALLBACKS.filter(cb => cb.id === obj.name)[0];
+      //console.log('over', obj.name, cb)
+      if (cb) {
+        bgAnimResize(cb._obj);
+        cb.live = true;
+      }
     }}
     onMouseOut={() => {
-      console.log('out')
+      //console.log('out', obj.name)
+      setIsOver(false);
+      setTimeout(() => {
+        if (isOver) {
+          return;
+        }
+        const cb = RAF_CALLBACKS.filter(cb => cb.id === obj.name)[0];
+        if (cb) {
+          cb.live = false;
+        }
+      }, 300)
     }}>
-    <div 
+    <div className="item-bg"
       ref={bgRef}
       style={{
       position: 'absolute',
       overflow: 'hidden',
-      opacity: 0.2,
       /*
       background: `url(${obj.background})`,
       backgroundPosition: 'center',
@@ -186,7 +221,10 @@ function startRAFLoop() {
 
   (function loop() {
     for (let i = 0; i < RAF_CALLBACKS.length; i++) {
-      RAF_CALLBACKS[i].callback();
+      const item = RAF_CALLBACKS[i];
+      if (item.live) {
+        item.callback(item);
+      }
     }  
     requestAnimationFrame(loop)
   })()
@@ -274,6 +312,7 @@ function App() {
 
     RAF_CALLBACKS.push({
       callback: leftBandAnim(leftBandsRef.current),
+      live: true,
       id: 'left-bar'
     });
 
