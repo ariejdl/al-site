@@ -28,21 +28,25 @@ const itemsToShow = [
   {
     name: "William Morris Patterns",
     preview: "/previews/wm.jpg",
+    background: "/bgs/wm.jpg",
     text: "technologies: Blender, Python.  Permission granted by william morris gallery"
   },
   {
     name: "Josef Albers Study",
     preview: "/previews/ja.jpg",
+    background: "/bgs/ja.jpg",
     text: "technologies: JavaScript, Python, HTML, CSS"
   },
   {
     name: "Japanese Patterns",
     preview: "/previews/jpipe.jpg",
+    background: "/bgs/pat.jpg",
     text: "tool: Figma"
   },
   {
     name: "Japanese Poetry",
     preview: "/previews/jp.jpg",
+    background: "/bgs/poetry.jpg",
     text: "Technologies: JavaScript, Python, HTML, CSS"
   }
 ]
@@ -71,7 +75,24 @@ function TextAsLetters({ text }) {
 }
 
 function Item(obj) {
-  return  <div className="item">
+
+  const bgRef = useRef();
+
+  return  <div className="item"
+    onMouseOver={() => {
+      console.log(bgRef.current)
+    }}>
+    <div 
+      ref={bgRef}
+      style={{
+      position: 'absolute',
+      background: `url(${obj.background})`,
+      backgroundSize: 'cover',
+      width: '100%',
+      height: '100%'
+    }}>
+
+    </div>
     <div className="container">
       <img className="preview-img" src={obj.preview}/>
       <div className="preview-content">
@@ -155,7 +176,7 @@ function App() {
           duration: 1200,
           delay: (el, idx) => 
             isWord ?
-              Math.min(idx * 80, 2000) :
+              1000 + Math.min(idx * 80, 2000) :
               Math.min(idx * 20, 2000)
         })
       });
@@ -238,7 +259,7 @@ function App() {
             textAlign: 'center',
             padding: '40px 0 40px 0',
             fontSize: '1rem'
-          }}>sdg</div>
+          }}>...</div>
         </Route>)
       </Switch>
     </div>
