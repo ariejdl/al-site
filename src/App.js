@@ -15,6 +15,9 @@ let RAF_CALLBACKS = [];
 let elsId = 1;
 let leftElements = d3.range(0, 10).map(_ => newElement());
 const LINE_WIDTH = 4;
+const HAS_TOUCH = 'ontouchstart' in document.documentElement
+    || navigator.maxTouchPoints > 0
+    || navigator.msMaxTouchPoints > 0;
 
 const mmReplace = (v) => v.replace(/[JSP]/g, c => c.toLowerCase())
 
@@ -127,10 +130,41 @@ function bgAnimInit(el, bgImage) {
   };
 }
 
+function useWindowSize() {
+  // Initialize state with undefined width/height so server and client renders match
+  // Learn more here: https://joshwcomeau.com/react/the-perils-of-rehydration/
+  const [windowSize, setWindowSize] = useState({
+    width: undefined,
+    height: undefined,
+  });
+
+  useEffect(() => {
+    // Handler to call on window resize
+    function handleResize() {
+      // Set window width/height to state
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+    
+    // Add event listener
+    window.addEventListener("resize", handleResize);
+    
+    // Call handler right away so state gets updated with initial window size
+    handleResize();
+    
+    // Remove event listener on cleanup
+    return () => window.removeEventListener("resize", handleResize);
+  }, []); // Empty array ensures that effect is only run on mount
+
+  return windowSize;
+}
+
 function Item(obj) {
 
   const bgRef = useRef();
-  const [isOver, setIsOver] = useState(false);
+  const size = useWindowSize();
 
   useEffect(() => {
     if (!bgRef || !bgRef.current)
@@ -147,30 +181,32 @@ function Item(obj) {
     })
   }, [bgRef, obj.background, obj.name])
 
-  return  <div className="item"
-    onClick={() => {
-      window.open(obj.link);
-    }}
-    onMouseOver={() => {
-      setIsOver(true);
+  useEffect(() => {
+    if (obj.active) {
       const cb = RAF_CALLBACKS.filter(cb => cb.id === obj.name)[0];
       if (cb) {
         bgAnimResize(cb._obj);
         cb.live = true;
       }
-    }}
-    onMouseOut={() => {
-      setIsOver(false);
+    } else {
       const cb = RAF_CALLBACKS.filter(cb => cb.id === obj.name)[0];
       setTimeout(() => {
-        if (isOver) {
+        if (obj.active) {
           return;
         }
         if (cb) {
           cb.live = false;
         }
       }, 300)
-    }}>
+    }
+  }, [obj.active, obj.name, size]);
+
+  return  <div className={"item" + (obj.active ? " active" : "")}
+    onMouseOver={HAS_TOUCH ? undefined : () => obj.setActive()}
+    onTouchStart={HAS_TOUCH ? () => {
+      obj.setActive()
+    } : undefined}
+    onClick={() => window.open(obj.link)}>
     <div className="item-bg"
       ref={bgRef}
       style={{
@@ -270,8 +306,8 @@ function leftBandAnim(el) {
 function App() {
 
   const leftBandsRef = useRef();
-  const [mousePos, setMousePos] = useState();
   const [toggleEmail, setToggleEmail] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const pageHeight = document.body.clientHeight || 1000;
 
   useEffect(() => {
@@ -279,6 +315,12 @@ function App() {
     if (!window.chrome) {
       document.body.classList.add("not-chrome");
     }
+
+    setTimeout(() => {
+      if (selectedIndex === -1) {
+        setSelectedIndex(0);
+      }
+    }, 1000);
 
     ['h1 .letter', 'h3 .word', '.preview-img'].forEach((target) => {
 
@@ -299,6 +341,7 @@ function App() {
               Math.min(idx * 20, 2000)
         })
       });
+  // eslint-disable-next-line
   }, [])
 
   useEffect(() => {
@@ -333,11 +376,7 @@ function App() {
 
       <Switch>
         <Route exact path="/">
-          {
-            mousePos ?
-              <div></div> : null
-          }
-          <div onMouseMove={(e) => {setMousePos({ x: e.pageX, y: e.pageY })}}>
+          <div>
             <div className="container">
               <h1><TextAsLetters text="arie lakeman"/></h1>
               <h3>
@@ -348,14 +387,19 @@ function App() {
               </h3>
             </div>
             {
-              itemsToShow.map((obj, i) => <Item key={i} {...obj} />)
+              itemsToShow.map((obj, i) => 
+                  <Item
+                    active={selectedIndex === i}
+                    key={i}
+                    setActive={() => {setSelectedIndex(i)}}
+                    {...obj} />)
             }
           </div>
           <div style={{
             textAlign: 'center',
             padding: '40px 0 40px 0',
             fontSize: '1rem'
-          }}>...</div>
+          }}><a className="link" target="_blank" rel="noopener noreferrer" href="https://github.com/ariejdl/al-site">github source</a></div>
         </Route>)
       </Switch>
     </div>

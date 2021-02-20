@@ -43,6 +43,7 @@ a.link:active,
 	cursor: pointer;
 	padding: 5px;
 	transition: all 300ms ease-in-out;
+	text-decoration: none;
 }
 
 .link:hover {
@@ -98,9 +99,10 @@ h5 { font-size: 1rem; }
 .item .item-bg {
 	transition: opacity 300ms ease-in-out;
 	opacity: 0;
+	pointer-events: none;
 }
 
-.item:hover .item-bg {
+.item.active .item-bg {
 	opacity: 0.25;
 }
 
