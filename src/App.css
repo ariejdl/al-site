@@ -32,10 +32,15 @@ body {
 	display: block;
 }
 
-a {
-	color: #ccc;
-	text-decoration: underline;
+.link {
 	cursor: pointer;
+	padding: 5px;
+	transition: all 300ms ease-in-out;
+}
+
+.link:hover {
+	background: #e0e0e0;
+	color: #111;
 }
 
 h1 { font-size: 3rem; }
@@ -138,4 +143,12 @@ h5 { font-size: 1rem; }
 	h5 { font-size: 0.8rem; }
 	body { font-size: 0.8rem; }
 
+}
+
+
+@media only screen and (max-width: 500px) {
+	.preview-img {
+		width: 40px;
+		height: 40px;
+	}
 }

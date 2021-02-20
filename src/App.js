@@ -36,25 +36,29 @@ const itemsToShow = [
     name: "William Morris Patterns",
     preview: "/previews/wm.jpg",
     background: "/bgs/wm.jpg",
-    text: "technologies: Blender, Python.  Permission granted by william morris gallery"
+    text: "technologies: Blender, Python.  Permission granted by william morris gallery",
+    link: "https://www.youtube.com/watch?v=pLX73l67GHs"
   },
   {
     name: "Josef Albers Study",
     preview: "/previews/ja.jpg",
     background: "/bgs/ja.jpg",
-    text: "technologies: JavaScript, Python, HTML, CSS"
+    text: "technologies: JavaScript, Python, HTML, CSS",
+    link: "https://www.youtube.com/watch?v=VQtmqifUklA"
   },
   {
     name: "Japanese Patterns",
     preview: "/previews/jpipe.jpg",
     background: "/bgs/pat.jpg",
-    text: "tool: Figma"
+    text: "tool: Figma",
+    link: "http://www.arielakeman.com/japanese-patterns.jpg"
   },
   {
     name: "Japanese Poetry",
     preview: "/previews/jp.jpg",
     background: "/bgs/poetry.jpg",
-    text: "Technologies: JavaScript, Python, HTML, CSS"
+    text: "Technologies: JavaScript, Python, HTML, CSS",
+    link: "http://www.arielakeman.com/japanese-poetry"
   }
 ]
 
@@ -121,8 +125,8 @@ function bgAnimInit(el, bgImage) {
   app.stage.filters = [displacementFilter];
 
   app.renderer.view.style.transform = 'scale(1.02)';
-  displacementSprite.scale.x = 4;
-  displacementSprite.scale.y = 4;
+  displacementSprite.scale.x = 0.6;
+  displacementSprite.scale.y = 0.6;
 
   return {
     el, app, displacementSprite, tex, image
@@ -143,30 +147,31 @@ function Item(obj) {
       live: false,
       _obj: bgAnimInit(bgRef.current, obj.background),
       callback: (obj) => {
-        obj._obj.displacementSprite.x += 10;
-        obj._obj.displacementSprite.y += 4;
+        obj._obj.displacementSprite.x += 8;
+        obj._obj.displacementSprite.y += 8;
       }
     })
   }, [bgRef])
 
   return  <div className="item"
+    onClick={() => {
+      window.open(obj.link);
+    }}
     onMouseOver={() => {
       setIsOver(true);
       const cb = RAF_CALLBACKS.filter(cb => cb.id === obj.name)[0];
-      //console.log('over', obj.name, cb)
       if (cb) {
         bgAnimResize(cb._obj);
         cb.live = true;
       }
     }}
     onMouseOut={() => {
-      //console.log('out', obj.name)
       setIsOver(false);
+      const cb = RAF_CALLBACKS.filter(cb => cb.id === obj.name)[0];
       setTimeout(() => {
         if (isOver) {
           return;
         }
-        const cb = RAF_CALLBACKS.filter(cb => cb.id === obj.name)[0];
         if (cb) {
           cb.live = false;
         }
@@ -277,6 +282,7 @@ function App() {
 
   const leftBandsRef = useRef();
   const [mousePos, setMousePos] = useState();
+  const [toggleEmail, setToggleEmail] = useState(false);
   const pageHeight = document.body.clientHeight || 1000;
 
   useEffect(() => {
@@ -345,7 +351,12 @@ function App() {
           <div onMouseMove={(e) => {setMousePos({ x: e.pageX, y: e.pageY })}}>
             <div className="container">
               <h1><TextAsLetters text="arie lakeman"/></h1>
-              <h3><TextAsLetters text="cv" /><TextAsLetters text=", " /><TextAsLetters text="@email"/><TextAsLetters text=", selected work:"/></h3>
+              <h3>
+                <a className="link" href="/cv.pdf" rel="noopener noreferrer" target="_blank"><TextAsLetters text="cv" /></a>
+                <TextAsLetters text=", " />
+                <span className={toggleEmail ? "" : "link"} onClick={() => setToggleEmail(true)}><TextAsLetters text={toggleEmail ? "arie.lakeman@gmail.com" : "@email"}/></span>
+                <TextAsLetters text=", selected work:"/>
+              </h3>
             </div>
             {
               itemsToShow.map((obj, i) => <Item key={i} {...obj} />)
