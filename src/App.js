@@ -2,12 +2,9 @@
 import { useRef, useEffect, useState } from 'react';
 import './App.css';
 import {
-  useLocation,
-  withRouter,
   BrowserRouter as Router,
   Switch,
-  Route,
-  Link
+  Route
 } from "react-router-dom";
 import anime from "animejs";
 import * as d3 from "d3";
@@ -19,16 +16,6 @@ let elsId = 1;
 let leftElements = d3.range(0, 10).map(_ => newElement());
 const LINE_WIDTH = 4;
 
-function loadImage(url) {
-  return new  Promise(resolve => {
-      const image = new Image();
-      image.addEventListener('load', () => {
-          resolve(image);
-      });
-      image.src = url; 
-  });
-}
-
 const mmReplace = (v) => v.replace(/[JSP]/g, c => c.toLowerCase())
 
 const itemsToShow = [
@@ -36,7 +23,7 @@ const itemsToShow = [
     name: "William Morris Patterns",
     preview: "/previews/wm.jpg",
     background: "/bgs/wm.jpg",
-    text: "technologies: Blender, Python.  Permission granted by william morris gallery",
+    text: "technologies: Blender, Python. Permission granted by william morris gallery",
     link: "https://www.youtube.com/watch?v=pLX73l67GHs"
   },
   {
@@ -95,6 +82,7 @@ function bgAnimResize(obj) {
   const image = obj.image;
   const aspectRatio = tex.orig.width / tex.orig.height;
 
+  const res = window.devicePixelRatio || 1;
   let finalWidth = width;
   let finalHeight = width / aspectRatio;
 
@@ -103,8 +91,8 @@ function bgAnimResize(obj) {
     finalWidth = finalHeight * aspectRatio;
   }
 
-  image.width = finalWidth;
-  image.height = finalHeight;
+  image.width = finalWidth / res;
+  image.height = finalHeight / res;
 }
 
 // https://redstapler.co/ultra-realistic-water-ripple-effect-javascript-tutorial/
@@ -112,7 +100,12 @@ function bgAnimInit(el, bgImage) {
   const elWidth = el.offsetWidth;
   const elHeight = el.offsetHeight;    
 
-  const app = new PIXI.Application({ width: elWidth, height: elHeight, backgroundColor: 0xffffff });
+  const app = new PIXI.Application({
+    width: elWidth,
+    height: elHeight,
+    backgroundColor: 0xffffff,
+    resolution: window.devicePixelRatio || 1
+  });
   el.appendChild(app.view);
   const tex = PIXI.Texture.from(bgImage);
   const image = new PIXI.Sprite.from(tex);
@@ -124,9 +117,10 @@ function bgAnimInit(el, bgImage) {
   app.stage.addChild(displacementSprite);
   app.stage.filters = [displacementFilter];
 
-  app.renderer.view.style.transform = 'scale(1.02)';
-  displacementSprite.scale.x = 0.6;
-  displacementSprite.scale.y = 0.6;
+  app.renderer.view.style.transform = 'scale(1.1)';
+  app.renderer.view.style.left = '20px';
+  displacementSprite.scale.x = 0.8;
+  displacementSprite.scale.y = 0.8;
 
   return {
     el, app, displacementSprite, tex, image
@@ -147,11 +141,11 @@ function Item(obj) {
       live: false,
       _obj: bgAnimInit(bgRef.current, obj.background),
       callback: (obj) => {
-        obj._obj.displacementSprite.x += 8;
-        obj._obj.displacementSprite.y += 8;
+        obj._obj.displacementSprite.x += (4 + Math.random() * 4);
+        obj._obj.displacementSprite.y += (4 + Math.random() * 4);
       }
     })
-  }, [bgRef])
+  }, [bgRef, obj.background, obj.name])
 
   return  <div className="item"
     onClick={() => {
@@ -182,18 +176,13 @@ function Item(obj) {
       style={{
       position: 'absolute',
       overflow: 'hidden',
-      /*
-      background: `url(${obj.background})`,
-      backgroundPosition: 'center',
-      backgroundSize: 'cover',
-      */
       width: '100%',
       height: '100%'
     }}>
 
     </div>
     <div className="container">
-      <img className="preview-img" src={obj.preview}/>
+      <img className="preview-img" src={obj.preview} alt="preview"/>
       <div className="preview-content">
         <h1>{ <TextAsLetters text={mmReplace(obj.name)} /> }</h1>
         <br/><br/><br/>
@@ -291,7 +280,7 @@ function App() {
       document.body.classList.add("not-chrome");
     }
 
-    ['h1 .letter', 'h3 .word', '.preview-img'].map((target) => {
+    ['h1 .letter', 'h3 .word', '.preview-img'].forEach((target) => {
 
       const isWord = !!target.match(/word/ig);
 
