@@ -35,6 +35,7 @@ body {
 a.link:visited,
 a.link:active,
 .link {
+	color: #666;
 	cursor: pointer;
 	padding: 5px;
 	transition: all 300ms ease-in-out;

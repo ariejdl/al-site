@@ -8,5 +8,4 @@ circle:
     color: rgb(0, 255, 255); 
     mix-blend-mode: difference;
 
-texture generated with:
-<https://cpetry.github.io/TextureGenerator-Online/>
+https://favicon.io/favicon-converter/
