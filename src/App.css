@@ -32,6 +32,8 @@ body {
 	display: block;
 }
 
+a.link:visited,
+a.link:active,
 .link {
 	cursor: pointer;
 	padding: 5px;
