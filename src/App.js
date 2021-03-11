@@ -306,6 +306,7 @@ function leftBandAnim(el) {
 function App() {
 
   const leftBandsRef = useRef();
+  const [isInit, setIsInit] = useState(false);
   const [toggleEmail, setToggleEmail] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const pageHeight = document.body.clientHeight || 1000;
@@ -317,10 +318,9 @@ function App() {
     }
 
     setTimeout(() => {
-      if (selectedIndex === -1) {
+        setIsInit(true);
         setSelectedIndex(0);
-      }
-    }, 1000);
+    }, 2000);
 
     ['h1 .letter', 'h3 .word', '.preview-img'].forEach((target) => {
 
@@ -356,7 +356,9 @@ function App() {
 
     startRAFLoop();
 
-  }, [leftBandsRef])
+  }, [leftBandsRef]);
+
+  return <div>arie lakeman</div>
 
   return (
     <Router>
@@ -391,7 +393,11 @@ function App() {
                   <Item
                     active={selectedIndex === i}
                     key={i}
-                    setActive={() => {setSelectedIndex(i)}}
+                    setActive={() => {
+                      if (isInit) {
+                        setSelectedIndex(i);
+                      }
+                    }}
                     {...obj} />)
             }
           </div>
