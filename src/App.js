@@ -30,6 +30,13 @@ const itemsToShow = [
     link: "https://www.youtube.com/watch?v=pLX73l67GHs"
   },
   {
+    name: "blender Renders",
+    preview: "/previews/jt.jpg",
+    background: "/bgs/jt.jpg",
+    text: "My attempts to imitate different images and scenes in Blender",
+    link: "/blender-renders.pdf"
+  },
+  {
     name: "Josef Albers Study",
     preview: "/previews/ja.jpg",
     background: "/bgs/ja.jpg",
@@ -172,37 +179,32 @@ function Item(obj) {
 
     RAF_CALLBACKS.push({
       id: obj.name,
-      live: false,
       _obj: bgAnimInit(bgRef.current, obj.background),
       callback: (obj) => {
         obj._obj.displacementSprite.x += (4 + Math.random() * 4);
         obj._obj.displacementSprite.y += (4 + Math.random() * 4);
       }
     })
-  }, [bgRef, obj.background, obj.name])
+  }, [bgRef, obj.background, obj.name]);
 
   useEffect(() => {
     if (obj.active) {
       const cb = RAF_CALLBACKS.filter(cb => cb.id === obj.name)[0];
       if (cb) {
         bgAnimResize(cb._obj);
-        cb.live = true;
       }
     } else {
-      const cb = RAF_CALLBACKS.filter(cb => cb.id === obj.name)[0];
       setTimeout(() => {
         if (obj.active) {
           return;
-        }
-        if (cb) {
-          cb.live = false;
         }
       }, 300)
     }
   }, [obj.active, obj.name, size]);
 
   return  <div className={"item" + (obj.active ? " active" : "")}
-    onMouseOver={HAS_TOUCH ? undefined : () => obj.setActive()}
+    onMouseOver={HAS_TOUCH ?
+      undefined : () => obj.setActive()}
     onTouchStart={HAS_TOUCH ? () => {
       obj.setActive()
     } : undefined}
@@ -252,9 +254,7 @@ function startRAFLoop() {
   (function loop() {
     for (let i = 0; i < RAF_CALLBACKS.length; i++) {
       const item = RAF_CALLBACKS[i];
-      if (item.live) {
-        item.callback(item);
-      }
+      item.callback(item);
     }  
     requestAnimationFrame(loop)
   })()
@@ -350,15 +350,12 @@ function App() {
 
     RAF_CALLBACKS.push({
       callback: leftBandAnim(leftBandsRef.current),
-      live: true,
       id: 'left-bar'
     });
 
     startRAFLoop();
 
   }, [leftBandsRef]);
-
-  return <div>arie lakeman</div>
 
   return (
     <Router>
@@ -382,8 +379,8 @@ function App() {
             <div className="container">
               <h1><TextAsLetters text="arie lakeman"/></h1>
               <h3>
-                <a className="link" href="/cv.pdf" rel="noopener noreferrer" target="_blank"><TextAsLetters text="cv" /></a>
-                <TextAsLetters text=", " />
+                {/*<a className="link" href="/cv.pdf" rel="noopener noreferrer" target="_blank"><TextAsLetters text="cv" /></a>
+                <TextAsLetters text=", " />*/}
                 <span className={toggleEmail ? "" : "link"} onClick={() => setToggleEmail(true)}><TextAsLetters text={toggleEmail ? "arie.lakeman@gmail.com" : "@email"}/></span>
                 <TextAsLetters text=", selected work:"/>
               </h3>
